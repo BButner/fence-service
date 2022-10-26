@@ -14,7 +14,7 @@ pub struct Manager {}
 #[tonic::async_trait]
 impl DisplayManager for Manager {
     async fn get_displays(&self, _request: Request<()>) -> Result<Response<DisplayList>, Status> {
-        let state = unsafe { crate::STATE.as_ref().unwrap().lock().await };
+        let state = unsafe { crate::STATE.lock().await };
 
         Ok(Response::new(DisplayList {
             displays: state
@@ -27,7 +27,7 @@ impl DisplayManager for Manager {
     }
 
     async fn set_displays(&self, request: Request<DisplayList>) -> Result<Response<()>, Status> {
-        let mut state = unsafe { crate::STATE.as_ref().unwrap().lock().await };
+        let mut state = unsafe { crate::STATE.lock().await };
 
         state.displays = request
             .into_inner()

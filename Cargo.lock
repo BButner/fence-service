@@ -134,6 +134,7 @@ dependencies = [
 name = "fence-service"
 version = "0.1.0"
 dependencies = [
+ "once_cell",
  "prost",
  "tokio",
  "tonic",
