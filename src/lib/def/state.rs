@@ -1,3 +1,5 @@
+use super::display::Display;
+
 pub struct State {
     pub displays: Vec<Display>,
     pub is_active: bool,
