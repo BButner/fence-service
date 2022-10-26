@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package displays;
+
+message Display {
+	string name = 1;
+	uint32 width = 2;
+	uint32 height = 3;
+	int32 top = 4;
+	int32 left = 5;
+	bool selected = 6;
+}
+
+service DisplayManager {
+	rpc SayDisplay (Display) returns (Display) {}
+}
