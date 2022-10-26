@@ -1,5 +1,6 @@
 use tonic::transport::Server;
 
+pub mod cursor_manager;
 pub mod display_manager;
 
 pub async fn start_server() {
@@ -7,6 +8,7 @@ pub async fn start_server() {
 
     Server::builder()
         .add_service(self::display_manager::get_service())
+        .add_service(self::cursor_manager::get_service())
         .serve(addr)
         .await
         .unwrap();
