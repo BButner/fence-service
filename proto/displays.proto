@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 package displays;
 
 message Display {
@@ -11,6 +13,11 @@ message Display {
 	bool selected = 6;
 }
 
+message DisplayList {
+	repeated Display displays = 1;
+}
+
 service DisplayManager {
-	rpc SayDisplay (Display) returns (Display) {}
+	rpc GetDisplays (google.protobuf.Empty) returns (DisplayList) {}
+	rpc SetDisplays (DisplayList) returns (google.protobuf.Empty) {}
 }

@@ -1,6 +1,5 @@
-use std::sync::Mutex;
-
 use lib::def::state::State;
+use tokio::sync::Mutex;
 
 use crate::lib::grpc::start_server;
 
