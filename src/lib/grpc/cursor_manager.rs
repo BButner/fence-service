@@ -6,6 +6,8 @@ pub mod grpc_cursor {
 
 use grpc_cursor::cursor_manager_server::{CursorManager, CursorManagerServer};
 
+use crate::lib::hooks::windows::{start_mouse_hook, stop_mouse_hook};
+
 use self::grpc_cursor::CursorLockResponse;
 
 #[derive(Default)]
@@ -17,6 +19,8 @@ impl CursorManager for Manager {
         &self,
         _request: Request<()>,
     ) -> Result<Response<CursorLockResponse>, Status> {
+        start_mouse_hook();
+
         Ok(Response::new(CursorLockResponse {
             is_locked: true,
             error_message: "This is an example".to_string(),
@@ -27,6 +31,8 @@ impl CursorManager for Manager {
         &self,
         _request: Request<()>,
     ) -> Result<Response<CursorLockResponse>, Status> {
+        stop_mouse_hook().await;
+
         Ok(Response::new(CursorLockResponse {
             is_locked: false,
             error_message: "This is an example".to_string(),
