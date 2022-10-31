@@ -2,12 +2,21 @@ use tokio::spawn;
 use windows::Win32::{
     Foundation::{LPARAM, LRESULT, WPARAM},
     UI::WindowsAndMessaging::{
-        CallNextHookEx, GetMessageA, PostQuitMessage, SetWindowsHookExW, UnhookWindowsHookEx,
-        HHOOK, MOUSEHOOKSTRUCT, WH_MOUSE_LL, WM_QUIT,
+        CallNextHookEx, GetMessageA, PostQuitMessage, SetCursorPos, SetWindowsHookExW,
+        UnhookWindowsHookEx, HHOOK, MOUSEHOOKSTRUCT, WH_MOUSE_LL, WM_QUIT,
     },
 };
 
-use crate::_is_active;
+use crate::{_is_active, lib::def::display::Display};
+static mut _last_good_x: i32 = 0;
+static mut _last_good_y: i32 = 0;
+pub static mut _displays: Vec<Display> = vec![];
+
+pub fn set_displays(displays: Vec<Display>) {
+    unsafe {
+        _displays = displays;
+    }
+}
 
 static mut MOUSE_HOOK: Option<HHOOK> = None;
 
@@ -62,56 +71,54 @@ unsafe extern "system" fn mouse_hook_callback(
         PostQuitMessage(0);
     }
 
-    CallNextHookEx(MOUSE_HOOK, code, w_param, l_param)
+    let mut inside = false;
 
-    // let mut inside = false;
+    for display in _displays.iter() {
+        if display.selected {
+            if mouse_x >= display.left + 1
+                && mouse_x <= display.left + (display.width - 1) as i32
+                && mouse_y >= display.top + 1
+                && mouse_y <= display.top + (display.height - 1) as i32
+            {
+                inside = true;
+                break;
+            }
+        }
+    }
 
-    // for display in _displays.iter() {
-    //     if display.selected {
-    //         if mouse_x >= display.left + 1
-    //             && mouse_x <= display.left + (display.width - 1) as i32
-    //             && mouse_y >= display.top + 1
-    //             && mouse_y <= display.top + (display.height - 1) as i32
-    //         {
-    //             inside = true;
-    //             break;
-    //         }
-    //     }
-    // }
+    if inside {
+        _last_good_x = mouse_x;
+        _last_good_y = mouse_y;
+        return CallNextHookEx(MOUSE_HOOK, code, w_param, l_param);
+    } else {
+        let mut display = _displays.iter().find(|d| {
+            _last_good_x >= d.left
+                && _last_good_x <= d.left + d.width as i32
+                && _last_good_y >= d.top
+                && _last_good_y <= d.top + d.height as i32
+        });
 
-    // if inside {
-    //     _last_good_x = mouse_x;
-    //     _last_good_y = mouse_y;
-    //     return LRESULT(0);
-    // } else {
-    //     let mut display = _displays.iter().find(|d| {
-    //         _last_good_x >= d.left
-    //             && _last_good_x <= d.left + d.width as i32
-    //             && _last_good_y >= d.top
-    //             && _last_good_y <= d.top + d.height as i32
-    //     });
+        if let Some(good_monitor) = display {
+            let mut new_x = mouse_x;
+            let mut new_y = mouse_y;
 
-    //     if let Some(good_monitor) = display {
-    //         let mut new_x = mouse_x;
-    //         let mut new_y = mouse_y;
+            if mouse_x < good_monitor.left {
+                new_x = good_monitor.left;
+            } else if mouse_x > good_monitor.left + good_monitor.width as i32 {
+                new_x = good_monitor.left + good_monitor.width as i32;
+            }
 
-    //         if mouse_x < good_monitor.left {
-    //             new_x = good_monitor.left;
-    //         } else if mouse_x > good_monitor.left + good_monitor.width as i32 {
-    //             new_x = good_monitor.left + good_monitor.width as i32;
-    //         }
+            if mouse_y < good_monitor.top {
+                new_y = good_monitor.top;
+            } else if mouse_y > good_monitor.top + good_monitor.height as i32 {
+                new_y = good_monitor.top + good_monitor.height as i32;
+            }
 
-    //         if mouse_y < good_monitor.top {
-    //             new_y = good_monitor.top;
-    //         } else if mouse_y > good_monitor.top + good_monitor.height as i32 {
-    //             new_y = good_monitor.top + good_monitor.height as i32;
-    //         }
+            SetCursorPos(new_x, new_y);
+        } else {
+            SetCursorPos(_last_good_x, _last_good_y);
+        }
 
-    //         SetCursorPos(new_x, new_y);
-    //     } else {
-    //         SetCursorPos(_last_good_x, _last_good_y);
-    //     }
-
-    //     return LRESULT(1);
-    // }
+        return LRESULT(1);
+    }
 }

@@ -6,6 +6,8 @@ pub mod grpc_display {
 
 use grpc_display::display_manager_server::{DisplayManager, DisplayManagerServer};
 
+use crate::lib::{def::display, hooks::windows::set_displays};
+
 use self::grpc_display::DisplayList;
 
 #[derive(Default)]
@@ -29,12 +31,16 @@ impl DisplayManager for Manager {
     async fn set_displays(&self, request: Request<DisplayList>) -> Result<Response<()>, Status> {
         let mut state = unsafe { crate::STATE.lock().await };
 
-        state.displays = request
+        let displays: Vec<crate::lib::def::display::Display> = request
             .into_inner()
             .displays
             .into_iter()
             .map(|d| d.into())
             .collect();
+
+        state.displays = displays.clone();
+
+        set_displays(displays);
 
         Ok(Response::new(()))
     }
