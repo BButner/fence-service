@@ -3,7 +3,7 @@ use windows::Win32::{
     Foundation::{LPARAM, LRESULT, WPARAM},
     UI::WindowsAndMessaging::{
         CallNextHookEx, GetMessageA, PostQuitMessage, SetCursorPos, SetWindowsHookExW,
-        UnhookWindowsHookEx, HHOOK, MOUSEHOOKSTRUCT, WH_MOUSE_LL, WM_QUIT,
+        UnhookWindowsHookEx, HHOOK, MOUSEHOOKSTRUCT, WH_MOUSE_LL,
     },
 };
 
