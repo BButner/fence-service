@@ -2,7 +2,12 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
-package displays;
+package fence;
+
+message CursorLockResponse {
+	bool isLocked = 1;
+	string errorMessage = 2;
+}
 
 message Display {
 	string name = 1;
@@ -17,7 +22,9 @@ message DisplayList {
 	repeated Display displays = 1;
 }
 
-service DisplayManager {
+service FenceManager {
+	rpc ActivateCursorLock (google.protobuf.Empty) returns (CursorLockResponse) {}
+	rpc DeactivateCursorLock (google.protobuf.Empty) returns (CursorLockResponse) {}
 	rpc GetDisplays (google.protobuf.Empty) returns (DisplayList) {}
 	rpc SetDisplays (DisplayList) returns (google.protobuf.Empty) {}
 }
