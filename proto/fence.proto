@@ -24,7 +24,10 @@ message DisplayList {
 
 message DisplayToggleRequest {
 	string name = 1;
-	bool selected = 2;
+}
+
+message DisplayToggleResponse {
+	bool selected = 1;
 }
 
 service FenceManager {
@@ -32,5 +35,5 @@ service FenceManager {
 	rpc DeactivateCursorLock (google.protobuf.Empty) returns (CursorLockResponse) {}
 	rpc GetDisplays (google.protobuf.Empty) returns (DisplayList) {}
 	rpc SetDisplays (DisplayList) returns (google.protobuf.Empty) {}
-	rpc ToggleDisplaySelected (DisplayToggleRequest) returns (DisplayToggleRequest) {}
+	rpc ToggleDisplaySelected (DisplayToggleRequest) returns (DisplayToggleResponse) {}
 }
