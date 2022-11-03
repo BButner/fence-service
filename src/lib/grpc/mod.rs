@@ -2,7 +2,7 @@ use tonic::{transport::Server, Request, Response, Status};
 
 use self::grpc_fence::{
     fence_manager_server::{FenceManager, FenceManagerServer},
-    CursorLockResponse, DisplayList,
+    CursorLockResponse, DisplayList, DisplayToggleRequest,
 };
 
 use super::hooks::windows::{set_displays, start_mouse_hook, stop_mouse_hook};
@@ -67,6 +67,27 @@ impl FenceManager for Manager {
         Ok(Response::new(CursorLockResponse {
             is_locked: false,
             error_message: "This is an example".to_string(),
+        }))
+    }
+
+    async fn toggle_display_selected(
+        &self,
+        request: Request<grpc_fence::DisplayToggleRequest>,
+    ) -> Result<Response<DisplayToggleRequest>, Status> {
+        let mut state = unsafe { crate::STATE.lock().await };
+        let request_display = request.into_inner();
+
+        let mut display = state
+            .displays
+            .iter_mut()
+            .find(|d| d.name == request_display.name.clone())
+            .unwrap();
+
+        display.selected = !display.selected;
+
+        Ok(Response::new(DisplayToggleRequest {
+            name: request_display.name,
+            selected: display.selected,
         }))
     }
 }

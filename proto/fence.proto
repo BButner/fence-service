@@ -22,9 +22,15 @@ message DisplayList {
 	repeated Display displays = 1;
 }
 
+message DisplayToggleRequest {
+	string name = 1;
+	bool selected = 2;
+}
+
 service FenceManager {
 	rpc ActivateCursorLock (google.protobuf.Empty) returns (CursorLockResponse) {}
 	rpc DeactivateCursorLock (google.protobuf.Empty) returns (CursorLockResponse) {}
 	rpc GetDisplays (google.protobuf.Empty) returns (DisplayList) {}
 	rpc SetDisplays (DisplayList) returns (google.protobuf.Empty) {}
+	rpc ToggleDisplaySelected (DisplayToggleRequest) returns (DisplayToggleRequest) {}
 }
