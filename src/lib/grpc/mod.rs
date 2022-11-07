@@ -3,9 +3,13 @@ use tonic::{transport::Server, Request, Response, Status};
 use self::grpc_fence::{
     fence_manager_server::{FenceManager, FenceManagerServer},
     CursorLockResponse, DisplayList, DisplayToggleRequest, DisplayToggleResponse,
+    SaveDisplaysResponse,
 };
 
-use super::hooks::windows::{set_displays, start_mouse_hook, stop_mouse_hook};
+use super::{
+    file::saving::save_displays,
+    hooks::windows::{set_displays, start_mouse_hook, stop_mouse_hook},
+};
 
 pub mod grpc_fence {
     tonic::include_proto!("fence");
@@ -88,6 +92,18 @@ impl FenceManager for Manager {
         Ok(Response::new(DisplayToggleResponse {
             selected: display.selected,
         }))
+    }
+
+    async fn save_displays(
+        &self,
+        _request: Request<()>,
+    ) -> Result<Response<SaveDisplaysResponse>, Status> {
+        let result = save_displays().await;
+
+        match result {
+            Ok(res) => Ok(Response::new(SaveDisplaysResponse { saved: res })),
+            Err(e) => Err(Status::internal(e.to_string())),
+        }
     }
 }
 
