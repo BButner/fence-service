@@ -30,15 +30,21 @@ message DisplayToggleResponse {
 	bool selected = 1;
 }
 
-message SaveDisplaysResponse {
+message SaveConfigResponse {
 	bool saved = 1;
+}
+
+message ConfigResponse {
+	repeated Display displays = 1;
+	float ui_display_factor = 2;
+	bool active_by_default = 3;
 }
 
 service FenceManager {
 	rpc ActivateCursorLock (google.protobuf.Empty) returns (CursorLockResponse) {}
 	rpc DeactivateCursorLock (google.protobuf.Empty) returns (CursorLockResponse) {}
-	rpc GetDisplays (google.protobuf.Empty) returns (DisplayList) {}
 	rpc SetDisplays (DisplayList) returns (google.protobuf.Empty) {}
-	rpc SaveDisplays (google.protobuf.Empty) returns (SaveDisplaysResponse) {}
+	rpc GetConfig (google.protobuf.Empty) returns (ConfigResponse) {}
+	rpc SaveConfig (ConfigResponse) returns (ConfigResponse) {}
 	rpc ToggleDisplaySelected (DisplayToggleRequest) returns (DisplayToggleResponse) {}
 }

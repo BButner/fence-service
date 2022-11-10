@@ -14,12 +14,12 @@ pub static mut STATE: Lazy<Arc<Mutex<State>>> = Lazy::new(|| Arc::new(Mutex::new
 
 #[tokio::main]
 async fn main() {
-    let load_displays = lib::file::saving::load_displays().await;
+    let load_config = lib::file::saving::load_config().await;
 
-    match (load_displays) {
+    match (load_config) {
         Ok(_) => {}
         Err(e) => {
-            println!("Error loading displays: {}", e);
+            println!("Error loading config: {}", e);
         }
     }
 

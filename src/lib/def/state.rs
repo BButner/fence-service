@@ -1,14 +1,14 @@
-use super::display::Display;
+use super::{config::Config, display::Display};
 
 pub struct State {
-    pub displays: Vec<Display>,
+    pub config: Config,
     pub is_active: bool,
 }
 
 impl State {
     pub fn new() -> Self {
         Self {
-            displays: Vec::new(),
+            config: Config::new(),
             is_active: false,
         }
     }

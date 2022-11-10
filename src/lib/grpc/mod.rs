@@ -2,12 +2,13 @@ use tonic::{transport::Server, Request, Response, Status};
 
 use self::grpc_fence::{
     fence_manager_server::{FenceManager, FenceManagerServer},
-    CursorLockResponse, DisplayList, DisplayToggleRequest, DisplayToggleResponse,
-    SaveDisplaysResponse,
+    ConfigResponse, CursorLockResponse, DisplayList, DisplayToggleRequest, DisplayToggleResponse,
+    SaveConfigResponse,
 };
 
 use super::{
-    file::saving::save_displays,
+    def::config::Config,
+    file::saving::save_config,
     hooks::windows::{set_displays, start_mouse_hook, stop_mouse_hook},
 };
 
@@ -20,34 +21,56 @@ pub struct Manager {}
 
 #[tonic::async_trait]
 impl FenceManager for Manager {
-    async fn get_displays(&self, _request: Request<()>) -> Result<Response<DisplayList>, Status> {
+    async fn get_config(&self, _request: Request<()>) -> Result<Response<ConfigResponse>, Status> {
         let state = unsafe { crate::STATE.lock().await };
 
-        Ok(Response::new(DisplayList {
+        Ok(Response::new(ConfigResponse {
             displays: state
+                .config
                 .displays
                 .clone()
                 .into_iter()
                 .map(|d| d.into())
                 .collect(),
+            ui_display_factor: state.config.ui_display_factor,
+            active_by_default: state.config.active_by_default,
         }))
     }
 
-    async fn set_displays(&self, request: Request<DisplayList>) -> Result<Response<()>, Status> {
+    async fn save_config(
+        &self,
+        request: Request<ConfigResponse>,
+    ) -> Result<Response<ConfigResponse>, Status> {
         let mut state = unsafe { crate::STATE.lock().await };
 
-        let displays: Vec<crate::lib::def::display::Display> = request
-            .into_inner()
-            .displays
-            .into_iter()
-            .map(|d| d.into())
-            .collect();
+        let config: Config = Config {
+            displays: request
+                .into_inner()
+                .displays
+                .into_iter()
+                .map(|d| d.into())
+                .collect(),
+            ui_display_factor: state.config.ui_display_factor,
+            active_by_default: state.config.active_by_default,
+        };
 
-        state.displays = displays.clone();
+        state.config = config.clone();
+        let result = save_config(config).await;
 
-        set_displays(displays);
-
-        Ok(Response::new(()))
+        match result {
+            Ok(_) => Ok(Response::new(ConfigResponse {
+                displays: state
+                    .config
+                    .displays
+                    .clone()
+                    .into_iter()
+                    .map(|d| d.into())
+                    .collect(),
+                ui_display_factor: state.config.ui_display_factor,
+                active_by_default: state.config.active_by_default,
+            })),
+            Err(e) => Err(Status::internal(e.to_string())),
+        }
     }
 
     async fn activate_cursor_lock(
@@ -82,6 +105,7 @@ impl FenceManager for Manager {
         let request_display = request.into_inner();
 
         let mut display = state
+            .config
             .displays
             .iter_mut()
             .find(|d| d.name == request_display.name.clone())
@@ -94,16 +118,19 @@ impl FenceManager for Manager {
         }))
     }
 
-    async fn save_displays(
-        &self,
-        _request: Request<()>,
-    ) -> Result<Response<SaveDisplaysResponse>, Status> {
-        let result = save_displays().await;
+    async fn set_displays(&self, request: Request<DisplayList>) -> Result<Response<()>, Status> {
+        let mut state = unsafe { crate::STATE.lock().await };
+        let request_displays = request.into_inner();
 
-        match result {
-            Ok(res) => Ok(Response::new(SaveDisplaysResponse { saved: res })),
-            Err(e) => Err(Status::internal(e.to_string())),
-        }
+        state.config.displays = request_displays
+            .displays
+            .into_iter()
+            .map(|d| d.into())
+            .collect();
+
+        set_displays(state.config.displays.clone());
+
+        Ok(Response::new(()))
     }
 }
 
